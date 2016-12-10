@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta property="og:title" content="Categorical Models" />
+<meta property="og:type" content="book" />
+
+
+<meta property="og:description" content="description" />
+<meta name="github-repo" content="repohere" />
+
+<meta name="author" content="Michael Clark" />
+
+<meta name="date" content="2016-09-18" />
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  TeX: { equationNumbers: { autoNumber: "AMS" } }
+});
+</script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML-full" type="text/javascript"></script>
+
+<meta name="description" content="description">
+
+<title>Categorical Models</title>
+
+<link href="libs/tufte-css-2015.12.29/tufte.css" rel="stylesheet" />
+<script src="libs/htmlwidgets-0.7/htmlwidgets.js"></script>
+<script src="libs/jquery-1.12.4/jquery.min.js"></script>
+<script src="libs/datatables-binding-0.2/datatables.js"></script>
+<link href="libs/dt-core-bootstrap-1.10.12/css/dataTables.bootstrap.min.css" rel="stylesheet" />
+<link href="libs/dt-core-bootstrap-1.10.12/css/dataTables.bootstrap.extra.css" rel="stylesheet" />
+<script src="libs/dt-core-bootstrap-1.10.12/js/jquery.dataTables.min.js"></script>
+<script src="libs/dt-core-bootstrap-1.10.12/js/dataTables.bootstrap.min.js"></script>
+<link href="libs/plotlyjs-1.10.1/plotly-htmlwidgets.css" rel="stylesheet" />
+<script src="libs/plotlyjs-1.10.1/plotly-latest.min.js"></script>
+<script src="libs/plotly-binding-3.6.0/plotly.js"></script>
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+</style>
+
+
+<link rel="stylesheet" href="toc.css" type="text/css" />
+<link rel="stylesheet" href="style_for_miles_and_miles_so_much_style_that_its_wasted.css" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+<div class="row">
+<div class="col-sm-12">
+<div id="TOC">
+<ul>
+<li><a href="index.html#preface"><span class="toc-section-number">1</span> Preface</a></li>
+<li><a href="2-intro.html#intro"><span class="toc-section-number">2</span> Introduction</a></li>
+<li class="has-sub"><a href="3-two-categories.html#two-categories"><span class="toc-section-number">3</span> Two categories</a><ul>
+<li class="has-sub"><a href="3-1-data.html#data"><span class="toc-section-number">3.1</span> Data</a><ul>
+<li><a href="3-1-data.html#binomial-distribution"><span class="toc-section-number">3.1.1</span> Binomial Distribution</a></li>
+</ul></li>
+<li><a href="3-2-logistic-regression-model.html#logistic-regression-model"><span class="toc-section-number">3.2</span> Logistic Regression Model</a></li>
+<li><a href="3-3-example.html#example"><span class="toc-section-number">3.3</span> Example</a></li>
+<li class="has-sub"><a href="3-4-interpretation.html#interpretation"><span class="toc-section-number">3.4</span> Interpretation</a><ul>
+<li><a href="3-4-interpretation.html#odds-ratios"><span class="toc-section-number">3.4.1</span> Odds ratios</a></li>
+<li><a href="3-4-interpretation.html#predicted-probabilities"><span class="toc-section-number">3.4.2</span> Predicted probabilities</a></li>
+</ul></li>
+<li><a href="3-5-summary-of-standard-logistic-regression.html#summary-of-standard-logistic-regression"><span class="toc-section-number">3.5</span> Summary of Standard Logistic Regression</a></li>
+<li class="has-sub"><a href="3-6-extensions.html#extensions"><span class="toc-section-number">3.6</span> Extensions</a><ul>
+<li><a href="3-6-extensions.html#counts"><span class="toc-section-number">3.6.1</span> Counts</a></li>
+<li><a href="3-6-extensions.html#conditional-logistic"><span class="toc-section-number">3.6.2</span> Conditional Logistic</a></li>
+<li><a href="3-6-extensions.html#bradley-terry-model"><span class="toc-section-number">3.6.3</span> Bradley-Terry Model</a></li>
+</ul></li>
+</ul></li>
+<li><a href="4-test-page.html#test-page"><span class="toc-section-number">4</span> test page</a></li>
+<li><a href="references.html#references">References</a></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="row">
+<div class="col-sm-12">
+<div id="references" class="section level1 unnumbered">
+<h1>References</h1>
+
+</div>
+<p style="text-align: center;">
+<a href="4-test-page.html"><button class="btn btn-default">Previous</button></a>
+</p>
+</div>
+</div>
+
+
+
+</body>
+</html>

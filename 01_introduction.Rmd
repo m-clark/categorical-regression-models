@@ -1,0 +1,6 @@
+# Introduction {#intro}
+
+
+
+
+This document attempts to provide clarification for the uninitiated.  Many in applied disciplines are exposed to standard linear regression and little more.  Or they might have a cursory glance at logistic regression, where it is presented in a manner such that one may come away feeling it is a wholly different type of analysis, even though some versions are a generalized linear model just as standard regression is.  Furthermore, there is a bit of a nomenclature issue, that again might make some think they are dealing with wholly different models, when in fact they are dealing with extensions of simpler ones they've been exposed to. This document hopes to provide a bit of clarity in this realm.

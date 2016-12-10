@@ -1,0 +1,354 @@
+# Two categories
+
+```{r echo=FALSE}
+library(tufte); library(tidyverse); library(lazerhawk)
+```
+
+## Data
+
+The most common use of logistic regression is the case where the target variable we wish to understand is a binary variable, e.g. yes/no, buy/sell, dead/alive etc.  Aside from the standard linear model for a continuous outcome, this is probably the most common statistical modeling situation.
+
+### Binomial Distribution
+
+As the outcome is binary, we can potentially understand the data generating process as a <span class="emph">binomial</span> distribution. The binomial is typically one of the first probability distributions introduced in a statistics class.  The classic example involves a coin flipping situation.  
+
+Going with that, let's say we flip the coin 10 times. The chance it comes up heads or tails is 50/50, i.e. the probability = .5. If we do this once, who knows how many times heads will come up.
+
+```{r binom1trial}
+sample(c('heads','tails'), 10, prob=c(.5, .5), replace=T)
+```
+
+
+However, if we repeat it over and over, we can see how often we might expect each possible outcome of 10 coin flips. The binomial has a parameter $\pi$, the probability that the event in question occurs. We set the size, or number of 'trials', accordingly.
+
+```{r binom, echo=1}
+output = rbinom(5000, size=10, prob=.5)
+
+ggplot(aes(x=factor(output)), data=data.frame(output=output)) + geom_bar(fill='lightblue', width=.7)  + xlab('') + theme_trueMinimal()
+```
+
+Since the probability is .5, we would expect an outcome of 5 heads out of 10 more than other outcomes.
+
+Now what if we have a situation where there is only one coin flip? In this case the size or number of trials is 1, and the distribution would look like the following.
+
+```{r binom_size1, echo=1}
+output = rbinom(1000, size=1, prob=.5)
+
+ggplot(aes(x=factor(output, labels=c('heads','tails'))), data=data.frame(output=output)) + geom_bar(fill='lightblue', width=.6)  + xlab('') + theme_trueMinimal()
+```
+
+Now we have come to the most common form of logistic regression. The target variable we wish to understand is binary, and the number of times in which it is observed is once, i.e. once per individual, tweet, firm, country, or whatever our data regards. 
+
+
+## Logistic Regression Model
+
+We'll start by writing up the data formally. For reference I'll start with the standard linear model for regression just to get our bearings.  We depict it as follows:
+
+$$ \mu = b_0 + b_1*x_1 + b_2*x_2 \dots b_p*x_p $$
+$$ \mu = X\beta $$
+$$ y \sim \mathcal{N}(\mu, \sigma^2)$$
+
+In the above $\mu$ is the linear predictor, the weighted combination of $p$ covariates $x$, written two ways, one explicit and one using matrix notation, where $X$ is the model matrix and $\beta$ the vector of coefficients.  The former is for those who are not familiar with matrix notation, as the latter can just be considered shorthand[^subscript].  The coefficients we wish to estimate are $\beta$, and for the normal distribution we also need to estimate the variance $\sigma^2$. 
+
+For binary target variables we do not assume the data generating process is a normal distribution, but instead we often consider a binomial as above.  The Bernoulli distribution is a special case of the binomial for the situation where size=1, and might be more optimal to use for some modeling approaches (e.g. Stan).  With logistic regression, the linear predictor is the <span class="emph">logit</span>, or log of the probability of the specific label of interest over the 1 minus that probability. Note that which label we refer to is arbitrary, e.g. whether you want the probability to regard a 'yes' outcome or 'no' is entirely up to you. 
+
+The logit is the name for the (natural) log of the odds, $\pi/(1-\pi)$, i.e. the ratio of the probability of the event of interest, $\pi$, to the probability of its non-occurrence. It theoretically ranges from $-\infty$ to $\infty$ and is centered at zero, which is akin to a probability of .5.  The logit is assumed to be some function of the covariates.
+
+$$\begin{align}
+\textrm{Logit}&\: \vcenter{:}\mathord{=} \:\ln(\frac{\pi}{1-\pi}) \\
+\textrm{Logit} &= X\beta
+\end{align}$$
+
+The transformation function, or <span class="emph">link function</span>, of interest is the <span class="emph">logistic</span> link, hence the name logistic regression. Probabilities are inherently nonlinear, e.g. the change from .05 to .10 is a doubling of the probability, while that from .50 to .55 is only a 10% increase. To engage in a linear model of the sort we use in other modeling approaches, the logistic link transforms the probability response to the logit.  Converting back to the probability scale requires the inverse logistic function, which might be depicted in different ways.
+
+<a id="binpred"></a> 
+$$\begin{align} 
+\pi &= \textrm{Logit}^{-1} \\
+\pi &= \frac{1}{1+e^{-XB}}, \textrm{or} \\
+\pi &= \frac{e^{XB}}{1+e^{XB}}
+\end{align}$$
+
+And finally, given the probability, we can get the likelihood of the the response given that probability.
+
+$$\begin{align} 
+y &\sim \mathrm{Bin}(\pi, \mathrm{size}=1), \textrm{ or} \\
+y &\sim \mathrm{Bern}(\pi)
+\end{align}$$
+
+
+
+To make this clearer, let's convert a value presumed to be on the logit scale to a probability. We'll demonstrate the logit and inverse logit as well as the alternate 'by-hand' ways it might be depicted in various sources.
+
+```{r logittoprob}
+plogis(0)                  # convert to probability
+log(.5/(1-.5))             # logit
+qlogis(.5)
+plogis(-1)                 
+plogis(1)                  # 1 minus plogis(-1)
+1/(1+exp(-1))
+exp(1)/(1+exp(1))
+```
+
+Such a model is often called a logit model. However, calling a model by its link function seems odd to me for several reasons: there are several link functions one might use, the logit link function is used for other models (e.g. ordinal, neural nets), just calling it logit model doesn't tell you how many categories are present, and we don't do this with other models. Case in point, a very common alternative is the <span class="emph">probit</span> link function, which uses the cumulative normal distribution[^qnorm] to convert the probability scale to the logit. Practically anything that converts the linear predictor to $(0,1)$ will technically work. However, calling it a 'link' model does not change what one thinks about the underlying response distribution in this setting.
+
+$$ y \sim \mathrm{Bern}(\pi) \quad \scriptsize{\textrm{(a probit model, same as the logistic model)}} $$ 
+
+An example of different link functions is shown in the next figure.  There are sometimes reasons to prefer one over another, e.g. considering what one thinks about the tails of the distribution, and some can be seen as special cases of others (e.g. the <span class="emph">complementary log-log</span> is a special case of <span class="emph">generalized extreme value</span>). The choice becomes more important in multinomial and ordinal models.
+
+```{r links, echo=FALSE}
+LP = rnorm(2500)
+Logit = plogis(LP)
+Probit = pnorm(LP)
+Probit_t = extraDistr::pnst(LP, df=1)
+Extreme = exp(-exp(-LP))  # Generalized EV, with shape parameter = 0 (Gumbel) = cloglog
+# qplot(LP, exp(-LP)*exp(-exp(-LP)), geom='line') # density function
+# Cloglog = 1-exp(-exp(LP))
+dlinks = tidyr::gather(data_frame(`Linear Predictor`=LP,Logit,Probit, `T`=Probit_t, 
+                                  `Extreme Value`=Extreme),  #, Cloglog
+                       key=Link, value=Probability, -`Linear Predictor`)
+ggplot(aes(x=`Linear Predictor`, y=Probability), data=dlinks) +
+  geom_line(aes(color=Link)) +
+  theme_trueMinimal()
+```
+
+
+## Example
+
+We'll use the example from the [UCLA ATS website](http://www.ats.ucla.edu/stat/r/dae/logit.htm), in case one wants a bit more detail or see it with languages other than R. The hypothetical data regards graduate school admission, and we have undergraduate gpa, gre scores, and school prestige, a variable with values 1 through 4 where institutions with a rank of 1 have the highest prestige, and 4 the lowest.
+
+
+```{r read_admit_data, echo=1}
+admission = read.csv("data/admit.csv")
+DT::datatable(admission, width=400, style='bootstrap', rownames=FALSE, options=list(pageLength=5, dom='t'))
+```
+
+In this case our binary target is whether a prospective candidate is admitted or not (1=admitted, 0 not), and we wish to predict it with the other variables.
+
+```{r logreg}
+mod = glm(admit ~ gre + gpa + rank, data=admission, family=binomial)
+summary(mod)
+```
+
+
+## Interpretation
+
+The effects seen are in the directions expected, i.e. higher gre and gpa and more prestige suggests more likely admittance (recall lower prestige rank score means higher prestige).
+
+
+### Odds ratios
+
+The coefficients tell us what happens on the logit scale, which is perhaps not that interpretable, except in the usual regression sense. If I move up one value on gpa, the logit increases .77.  People typically convert the coefficients to <span class="emph">odds ratios</span>, which we obtain by exponentiating the coefficients.
+
+```{r odds_ratios}
+exp(coef(mod))
+```
+
+Now if I move up one on gpa, the odds of being admitted increase by a factor of `r round(exp(coef(mod))[3], 1)`, i.e. more than double. If my prestige rank increases by one (i.e. less prestige), the odds decrease by `r 100*(1-round(exp(coef(mod))[4], 2))`%.
+
+
+### Predicted probabilities
+
+Unless you do a lot of gambling, odds ratios probably aren't all that interpretable either. One can get the estimated probabilities at key values of the covariates, which are easier to understand. The following looks at the predicted probabilities for the extremes of prestige, holding gpa and gre scores at their mean.
+
+```{r logreg_predict}
+prediction_data = data.frame(gre=mean(admission$gre), gpa=mean(admission$gpa), rank=c(1,4))
+predict(mod, newdata=prediction_data)                    # logit scale
+predict(mod, newdata=prediction_data, type='response')   # probability scale
+```
+
+Thus even at average gre and gpa, one has a ~50% of being admitted to graduate school if they went to a highly prestigious school versus one that is not.
+
+To make things perfectly clear, let's do it by hand.
+
+```{r prediction}
+coefs = coef(mod)
+prediction = coefs[1] + coefs[2]*mean(admission$gre)  + coefs[3]*mean(admission$gpa) + coefs[4]*c(1,4)
+prediction
+plogis(prediction)
+```
+
+The nonlinear nature of the model becomes clear if we visualize the relationships of covariates on the logit versus probability scales. The plot below depicts the gpa effect.
+
+```{r plot_prediction, echo=1:4, fig.width=4}
+prediction_data = data.frame(gre = mean(admission$gre),
+                              gpa = rep(seq(from = 0, to = 4, length.out = 100), 4), rank = 1)
+
+preds_logit = predict(mod, newdata = prediction_data, type="link")
+preds_prob = predict(mod, newdata = prediction_data, type="response")
+# 
+# ggplot(aes(x=gpa, y=preds_logit), data=prediction_data) +
+#   geom_line(color='#ff5503') + 
+#   ylim(c(-3,3)) +
+#   theme_trueMinimal()
+# ggplot(aes(x=gpa, y=preds_prob), data=prediction_data) +
+#   geom_line(color='#ff5503') + 
+#     ylim(c(0,1)) +
+#   theme_trueMinimal()
+
+library(plotly)
+y2layout = list(
+  # tickfont = list(color = "red"),
+  overlaying = "y",
+  side = "right",
+  range = c(0,1),
+  dtick = 1/4,
+  showgrid=F
+)
+
+y1layout = list(
+  range = c(-3,3),
+  dtick = 1
+)
+plotdata = data.frame(prediction_data, preds_logit, preds_prob) %>% arrange(gpa)
+plot_ly(x=gpa, y=preds_logit, data=plotdata, yaxis='y1', name='Logit', width=800) %>% 
+  add_trace(x=gpa, y=preds_prob, yaxis = "y2", name='Probability Scale') %>%
+  layout(yaxis2 = y2layout, yaxis=y1layout) %>% 
+  theme_plotly()
+```
+
+
+## Summary of Standard Logistic Regression
+
+So there you have it.  The standard logistic regression is the simplest setting for a categorical outcome, one in which there are two possibilities, and only one of which can occur. It is a special case of multinomial, ordinal, and conditional logistic regression, and so can serve as a starting point for moving toward those models.
+
+
+## Extensions
+### Counts
+
+As noted, the binomial distribution refers to situations in which an event occurs x number of times out of some number of trials/observations.  In the binary logistic regression model, the number of trials is 1, but it certainly doesn't have to be.  If it is more than 1 we can then model the proportion, and at least in R the glm function is still used with family = binomial just as before.  We just specify the target variable differently, in terms of the number of times the vs. the number of times it did not.
+
+```{r binomialreg, eval=F}
+glm(cbind(occurrences, non-occurrences) ~ x + z, data=mydata, family=binomial)
+```
+
+
+#### Link with Poisson
+
+If the occurrences are rare and/or the total number of trials is unknown, then the model is equivalent to Poisson regression.  For more on this see [link]() 
+
+### Conditional Logistic
+
+Situations arise when there are alternative specific covariates, such that the value a covariate takes can be different for the two outcomes.  This is the first step toward *discrete choice* models (a.k.a. McFadden choice model), in which there are often more than two choices (as we will see with multinomial models), and values vary with choice.  The key idea is that we have strata or groups which contain both positive and negative target values.  However, the model is similar.
+
+$$ \textrm{Logit} \propto X\beta $$
+
+The odds of the event are *proportional to* the linear combination of the covariates.  This generalizes the previous logistic regression model depicted, as it can be seen as a special case. 
+
+
+#### Example
+
+The following example regards infertility after spontaneous and induced abortion. It is a matched case-control study such that we have exactly one 'case', i.e. person with infertility, per two control observations[^stratum]. We will model this with covariates that regard whether or not they previously had a spontaneous or induced abortion.
+
+```{r condlogreg}
+infert = infert %>%
+  mutate(spontaneous = factor(spontaneous >0, labels=c('No','Yes')),
+         induced = factor(induced>0, labels=c('No','Yes')))
+library(survival)
+# ?infert
+mod_logreg = glm(case ~ spontaneous + induced, data = infert, family = binomial)
+summary(mod_logreg)
+
+model_condlogreg = clogit(case ~ spontaneous + induced + strata(stratum), data = infert)
+summary(model_condlogreg)
+```
+
+
+
+Note that the intercept cancels out in conditional logistic regression. It could vary by group and it would still cancel (similar to so-called fixed-effects models). Also, any variable that is constant within group will similarly cancel out.  This may be better understood when the (log) likelihood is expressed as follows for the case where the strata are balanced (i.e. 1:1 matching).
+
+$$ \mathrm{L} = (X_{y=1} - X_{y=0})\beta$$
+$$ \mathcal{L} = \ln(\frac{e^L}{1+e^L})$$
+
+As such, anything constant within a strata would simply be 0.  
+
+
+You might have noticed the call in the clogit command output, where it says `coxph(...)`.  That isn't an error, the conditional logit is equivalent to the stratified cox proportional hazards model where the survival time is simply 1 if the event is observed, or censored (1+) if not.
+
+```{r survival}
+coxph(Surv(rep(1, nrow(infert)), case) ~ spontaneous + induced + strata(stratum), data=infert)
+```
+
+
+In the case of 1:N matching, the denominator is based on the sum of all N non-event outcomes. If X represents the covariate values for which the event occurs, and Z for those in which it does not, for each strata:
+
+
+$$ \mathcal{L} = \ln(\frac{e^{X_{y=1}\beta}}{\sum_{k=1}^N e^{Z_k\beta}})$$
+
+
+### Bradley-Terry Model
+
+The Bradley-Terry model (BT henceforth) is one in which we look to model pairwise rankings. For example, if one were to choose among various brands of some product they might select between two products at a time.  In the simplest case, the BT model posits the probability product $i$ is chosen over product $j$ as:
+
+$$\pi_{i>j} = \frac{\exp(\beta_i)}{\exp(\beta_i)+\exp(\beta_j)}$$
+$$\pi_{i>j} = \frac{\exp(\beta_i-\beta_j)}{1+\exp(\beta_i-\beta_j)}$$
+$$\mathrm{Logit}(\pi_{i>j})  = \log(\frac{\pi_{i>j}}{1 - \pi_{i>j}}) = \log(\frac{\pi_{i>j}}{\pi_{j>i}}) = \beta_i - \beta_j$$
+
+
+Thus it turns out the BT model has a connection to the standard logistic model, though we'll have to set up the data in a specific manner for comparison. We start by creating a model matrix where each column is 1 if that item is chosen, -1 if it isn't, and zero if it is not considered. Our response in this case is simply positive values. 
+
+```{r BTdatasetup, echo=F}
+logreg = function(par, X, y){
+  L = X %*% par
+  -sum(dbinom(y, size=1, prob=plogis(L), log=T))
+}
+# create some data. -1 means loser/not chosen, 1 means chosen, 0 otherwise; 
+# item 1 is most preferable
+BTdat = data.frame(item1 = c(-1, rep(1,7), rep(0,4)),
+                   item2 = c(rep(c(0,-1), e=4), 1,-1,-1,-1),
+                   item3 = c(1,-1,-1,-1, rep(0,4), -1,1,1,1),
+                   y=1)
+
+DT::datatable(BTdat,rownames=F, style='bootstrap',  options=list(dom='t', pageLength=12), width=400)
+```
+
+```{r BTglm}
+# glm output for comparison; no intercept; matrix columns are reordered for easier
+# comparison; item1 is the reference group and so won't have a coefficient
+glmmod = glm(y ~ -1 + ., data=BTdat[,c(2,3,1,4)], family=binomial)  
+coef(glmmod)
+
+# using logreg function in appendix;
+out = optim(rep(0,3), logreg, X=as.matrix(BTdat[,-4]), y=BTdat$y, method='BFGS')
+out$par                  # default chooses item 3 as reference
+out$par[2:3]-out$par[1]  # now same as glm with item 1 as reference
+```
+
+Once constructed we can run the standard logistic model, and I do so with a custom function, and with the <span class="func">glm</span> function.  For identification, one of the parameters must be set to zero, which glm just simply drops out.  By default the <span class="func">optim</span> output settles on the third item as the reference (as would glm[^btaslogreg]).
+
+For the BT model we need a different data structure, and will have a binary response where 1 represents that comparison the first comparison item was chosen. I show the first few rows here.
+
+
+```{r BTdatasetup2, echo=F}
+# create data format for BT2 package, y is 1 = winner
+BTdat2 = rbind(data.frame(comp1= 'item1', comp2='item2', y=rep(1,4)),
+               data.frame(comp1= 'item1', comp2='item3', y=c(0,1,1,1)),
+               data.frame(comp1= 'item2', comp2='item3', y=c(1,0,0,0)))
+
+BTdat2 = BTdat2 %>% 
+  mutate(comp1=factor(comp1, levels=c('item1','item2','item3')),
+         comp2=factor(comp2, levels=c('item1','item2','item3')))
+
+DT::datatable(BTdat2,rownames=F, style='bootstrap',  options=list(dom='t', pageLength=6), width=300)
+```
+
+The following uses the <span class="pack">BradleyTerry2</span> package and compares the results to the standard logistic both with our custom function and the glm result.
+
+
+```{r BTcomparison, echo=-7}
+library(BradleyTerry2)
+btmod = BTm(y, comp1, comp2, data = BTdat2)
+
+# coefficients in the BT model are a glm binomial regression with appropriate
+# coding of the model matrix, and represent the difference in the coefficient
+# from the reference group coefficient.
+data.frame(optim=out$par[2:3]-out$par[1], glm=coef(glmmod)[-3], BT=coef(btmod)) %>% round(5)
+```
+
+
+We can see that all results are the same.  Once again the output parameters from the model thus tells us the coefficient *difference* from some reference group coefficient.  Using the inverse logit transform tells us the probability of selecting that item relative to the reference group, but as noted previously, that transformation applied to any difference of the coefficients tells us that probability.  For example, with Item 1's parameter set to zero, the probability of choosing Item 1 vs. Item 2 is `plogis(0-(-2.83894))` `r round(plogis(0-(-2.83894)),3)`, which you can confirm by applying the <span class="func">fitted</span> function to the <span class="objclass">btmod</span>.  
+
+Note also the BT model is generalizable to counts, just like binary logistic regression is a special case of binomial regression more generally.  Also, the BT model can handle ties, and choice specific covariates, but at that point we're in the realm of multinomial regression, so we'll turn to that now.
+
+
+
+
