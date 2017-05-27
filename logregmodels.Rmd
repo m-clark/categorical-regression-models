@@ -885,6 +885,12 @@ Which of these might work best may be specific to the situation, but the gist is
 
 ## Machine Learning
 
+There are a great many machine learning techniques for both binary and multiclass target variables.  Many academic papers have been written using logistic regression models, where, if one had actually presented the classification performance, they would have found the model does no better than guessing.
+
+Machine learning approaches, on the other hand, put almost all of the focus on predictive preformance.  As such, for most typical data scenarios they will perform better than logistic regression almost as a default[^magic].  As an initial step, introducing a regularized approach to logistic regression, e.g. using lasso or ridge regression, would typically allow for better prediction while keeping all the interpretability of the usual approach.
+
+Beyond that there are <span class="emph">random forests</span>, <span class="emph">neural nets</span>, <span class="emph">support vector machines</span>, <span class="emph">topic modeling</span> (in the case of counts), etc.  For a demonstration of some of these in the binary target setting, see [this](https://m-clark.github.io/docs/machine_learning/).
+
 
 ## Item response theory
 
@@ -896,7 +902,7 @@ Which of these might work best may be specific to the situation, but the gist is
 
 $$P(t) = \frac{K P_0 e^{rt}}{K + P_0 \left( e^{rt} - 1\right)}$$
 
-I know little about these models, but I will say that unless some known physical law determines a functional form, you're better off not assuming one.
+I know little about these models, but I will say that unless some known physical law determines a functional form, you're better off not assuming one.  As an alternative approach, see this document on [additive models](https://m-clark.github.io/docs/GAM.html).
 
 
 
@@ -1349,3 +1355,5 @@ Greene, W. (2015). Applied Choice Analysis.
 
 
 [^rmultinom]: If you're like me, you'll have to mentally transpose the <span class="func">rmultinom</span> output.  You'll also have to explicitly do it in any normal data situation if you actually work with it, as your data would almost never expect to deal with it in that fashion.  You will typically have in your data frame a single column representing the class label, or a column for each class with a one in the column for the class that is chosen, or counts for each column.
+
+[^magic]: *But not always*. Despite many who believe machine learning to be magic, if you have a lot of data and very good predictors, you standard logistic regression will do just fine in a lot of cases.  Conversely, if you have crap data, machine learning techniques are not going to make the variables suddenly correlate where they didn't before.
