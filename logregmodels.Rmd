@@ -134,7 +134,7 @@ ggplot(aes(x=`Linear Predictor`, y=Probability), data=dlinks) +
 
 ## Example
 
-We'll use the example from the [UCLA ATS website](http://www.ats.ucla.edu/stat/r/dae/logit.htm), in case one wants a bit more detail or see it with languages other than R. The hypothetical data regards graduate school admission, and we have undergraduate gpa, gre scores, and school prestige, a variable with values 1 through 4 where institutions with a rank of 1 have the highest prestige, and 4 the lowest.
+We'll use the example from the [UCLA ATS website](http://www.ats.ucla.edu/stat/r/dae/logit.htm), in case one wants a bit more detail or see it with languages other than R. The hypothetical data regards graduate school admission, and we have undergraduate GPA, GRE scores, and school prestige, a variable with values 1 through 4 where institutions with a rank of 1 have the highest prestige, and 4 the lowest.
 
 
 ```{r read_admit_data, echo=1}
@@ -152,23 +152,23 @@ summary(mod)
 
 ## Interpretation
 
-The effects seen are in the directions expected, i.e. higher gre and gpa and more prestige suggests more likely admittance (recall lower prestige rank score means higher prestige).
+The effects seen are in the directions expected, i.e. higher GRE and GPA and more prestige suggests more likely admittance (recall lower prestige rank score means higher prestige).
 
 
 ### Odds ratios
 
-The coefficients tell us what happens on the logit scale, which is perhaps not that interpretable, except in the usual regression sense. If I move up one value on gpa, the logit increases .77.  People typically convert the coefficients to <span class="emph">odds ratios</span>, which we obtain by exponentiating the coefficients.
+The coefficients tell us what happens on the logit scale, which is perhaps not that interpretable, except in the usual regression sense. If I move up one value on GPA, the logit increases .77.  People typically convert the coefficients to <span class="emph">odds ratios</span>, which we obtain by exponentiating the coefficients.
 
 ```{r odds_ratios}
 exp(coef(mod))
 ```
 
-Now if I move up one on gpa, the odds of being admitted increase by a factor of `r round(exp(coef(mod))[3], 1)`, i.e. more than double. If my prestige rank increases by one (i.e. less prestige), the odds decrease by `r 100*(1-round(exp(coef(mod))[4], 2))`%.
+Now if I move up one on GPA, the odds of being admitted increase by a factor of `r round(exp(coef(mod))[3], 1)`, i.e. more than double. If my prestige rank increases by one (i.e. less prestige), the odds decrease by `r 100*(1-round(exp(coef(mod))[4], 2))`%.
 
 
 ### Predicted probabilities
 
-Unless you do a lot of gambling, odds ratios probably aren't all that interpretable either. One can get the estimated probabilities at key values of the covariates, which are easier to understand. The following looks at the predicted probabilities for the extremes of prestige, holding gpa and gre scores at their mean.
+Unless you do a lot of gambling, odds ratios probably aren't all that interpretable either. One can get the estimated probabilities at key values of the covariates, which are easier to understand. The following looks at the predicted probabilities for the extremes of prestige, holding GPA and GRE scores at their mean.
 
 ```{r logreg_predict}
 prediction_data = data.frame(gre=mean(admission$gre), gpa=mean(admission$gpa), rank=c(1,4))
@@ -176,7 +176,7 @@ predict(mod, newdata=prediction_data)                    # logit scale
 predict(mod, newdata=prediction_data, type='response')   # probability scale
 ```
 
-Thus even at average gre and gpa, one has a ~50% of being admitted to graduate school if they went to a highly prestigious school versus one that is not.
+Thus even at average GRE and GPA, one has a ~50% of being admitted to graduate school if they went to a highly prestigious school versus one that is not.
 
 To make things perfectly clear, let's do it by hand.
 
@@ -187,7 +187,7 @@ prediction
 plogis(prediction)
 ```
 
-The nonlinear nature of the model becomes clear if we visualize the relationships of covariates on the logit versus probability scales. The plot below depicts the gpa effect.
+The nonlinear nature of the model becomes clear if we visualize the relationships of covariates on the logit versus probability scales. The plot below depicts the GPA effect.
 
 ```{r plot_prediction, echo=1:4, fig.width=4}
 prediction_data = data.frame(gre = mean(admission$gre),
@@ -237,7 +237,7 @@ So there you have it.  The standard logistic regression is the simplest setting 
 ## Extensions
 ### Counts
 
-As noted, the binomial distribution refers to situations in which an event occurs x number of times out of some number of trials/observations.  In the binary logistic regression model, the number of trials is 1, but it certainly doesn't have to be.  If it is more than 1 we can then model the proportion, and at least in R the glm function is still used with family = binomial just as before.  We just specify the target variable differently, in terms of the number of times the vs. the number of times it did not.
+As noted, the binomial distribution refers to situations in which an event occurs x number of times out of some number of trials/observations.  In the binary logistic regression model, the number of trials is 1, but it certainly doesn't have to be.  If it is more than 1 we can then model the proportion, and at least in R the <span class="func">glm</span> function is still used with family = binomial just as before.  We just specify the target variable differently, in terms of the number of times the vs. the number of times it did not.
 
 ```{r binomialreg, eval=F}
 glm(cbind(occurrences, non-occurrences) ~ x + z, data=mydata, family=binomial)
@@ -887,7 +887,7 @@ Which of these might work best may be specific to the situation, but the gist is
 
 There are a great many machine learning techniques for both binary and multiclass target variables.  Many academic papers have been written using logistic regression models, where, if one had actually presented the classification performance, they would have found the model does no better than guessing.
 
-Machine learning approaches, on the other hand, put almost all of the focus on predictive preformance.  As such, for most typical data scenarios they will perform better than logistic regression almost as a default[^magic].  As an initial step, introducing a regularized approach to logistic regression, e.g. using lasso or ridge regression, would typically allow for better prediction while keeping all the interpretability of the usual approach.
+Machine learning approaches, on the other hand, put almost all of the focus on predictive performance.  As such, for most typical data scenarios they will perform better than logistic regression almost as a default[^magic].  As an initial step, introducing a regularized approach to logistic regression, e.g. using lasso or ridge regression, would typically allow for better prediction while keeping all the interpretability of the usual approach.
 
 Beyond that there are <span class="emph">random forests</span>, <span class="emph">neural nets</span>, <span class="emph">support vector machines</span>, <span class="emph">topic modeling</span> (in the case of counts), etc.  For a demonstration of some of these in the binary target setting, see [this](https://m-clark.github.io/docs/machine_learning/).
 
@@ -1199,7 +1199,7 @@ out
 
 ## Comparing Counts
 
-The following demonstrates the link between binomial logitic regression for counts, binary outcomes and poisson regression.
+The following demonstrates the link between binomial logistic regression for counts, binary outcomes and Poisson regression.
 
 ### Comparing count-based vs. binary logistic regression
 
@@ -1260,7 +1260,7 @@ summary(glmBinomRare)
 ```
 
 
-We now make the comparison to Poisson regression. The coefficient for x is similar. The intercept in the poisson regression is roughly the (log) count that would occur on average across the total sizes.
+We now make the comparison to Poisson regression. The coefficient for x is similar. The intercept in the Poisson regression is roughly the (log) count that would occur on average across the total sizes.
 
 ```{r pois_result}
 glmPois = glm(yRare ~ x, data=df3, family='poisson')
